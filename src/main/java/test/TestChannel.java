@@ -5,15 +5,25 @@ import org.junit.Test;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.RandomAccessFile;
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
+import java.nio.charset.Charset;
+import java.nio.charset.CharsetDecoder;
+import java.nio.charset.CharsetEncoder;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.SortedMap;
+import java.util.stream.Stream;
 
 
 /**
- *
+ * 
  * 
  * 通道：IO源与目标打开的连接,在NIO，负责缓冲区中数据的传输
  * java.nio.channels.Channel主要实现类
@@ -82,6 +92,78 @@ public class TestChannel {
         
         in.close();
         out.close();
+    }
+
+    /**
+     * 通道之间的数据传输（直接缓冲区）
+     */
+    @Test
+    public void test3() throws IOException {
+        FileChannel in = FileChannel.open(Paths.get("1.txt"), StandardOpenOption.READ);
+        FileChannel out = FileChannel.open(Paths.get("2.txt"), StandardOpenOption.WRITE,
+                StandardOpenOption.READ, StandardOpenOption.CREATE_NEW);
+        in.transferTo(0, in.size(), out);
+        // 另一种写法： out.transferFrom(in, 0, in.size());
+        in.close();
+        out.close();
+    }
+
+    /**
+     * 分散与聚集
+     * 分散读取：将通道中的数据分散到各个缓冲区中，按照缓冲区的顺序，从通道中取出数据依次将缓冲区填满
+     * 聚集写入：将多个缓冲区中的数据都聚集到通道中，按照缓冲区的顺序，写入position到limit之间的数据到通道中
+     */
+    @Test
+    public void test4() throws Exception {
+        RandomAccessFile raf = new RandomAccessFile("1.txt","rw");
+        FileChannel rchannel = raf.getChannel();
+        ByteBuffer buf1 = ByteBuffer.allocate(100);
+        ByteBuffer buf2 = ByteBuffer.allocate(1024);
+        ByteBuffer[] byteBuffers = {buf1, buf2};
+        rchannel.read(byteBuffers);
+        Stream.of(byteBuffers).forEach(Buffer::flip);
+        System.out.println(new String(buf1.array(), 0, buf1.limit()));
+        System.out.println(new String(buf2.array(), 0, buf2.limit()));
+
+        RandomAccessFile raf2 = new RandomAccessFile("3.txt","rw");
+        FileChannel wchannel = raf2.getChannel();
+        wchannel.write(byteBuffers);
+    }
+
+    /**
+     * 字符集
+     * 编码：字符串-》字节数组
+     * 解码：字节数组-》字符串
+     */
+    @Test
+    public void testcharset() {
+        SortedMap<String, Charset> stringCharsetSortedMap = Charset.availableCharsets();
+        stringCharsetSortedMap.forEach((k,v) -> System.out.println(k+"-"+v));
+    }
+
+    /**
+     * 获取编码器和解码器
+     */
+    @Test
+    public void testcharset2() throws Exception {
+        Charset gbk = Charset.forName("GBK");
+        CharsetEncoder encoder = gbk.newEncoder();
+        CharsetDecoder decoder = gbk.newDecoder();
+
+        CharBuffer charBuffer = CharBuffer.allocate(1024);
+        charBuffer.put("祝福祖国");
+        charBuffer.flip();
+
+        ByteBuffer byteBuffer = encoder.encode(charBuffer);
+        for (byte b : byteBuffer.array()) {
+            System.out.println(b);
+        }
+
+        CharBuffer charBuffer1 = gbk.decode(byteBuffer);
+
+        for (char c : charBuffer1.array()) {
+            System.out.println(c);
+        }
     }
 
 }
