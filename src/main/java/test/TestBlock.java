@@ -12,26 +12,8 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 
 /**
- * 
- * 阻塞式
- * 
- * nio的网络通信，三要素
- * 
- * 通道 
- * - Channel 接口：
- *      - SelectableChannel
- *           - SocketChannel
- *           - ServerSocketChannel
- *           - DatagramChannel
- *           - Pipe.SinkChannel
- *           - Pipe.SourceChannel
- *           
- *   FileChannel不能切换成非阻塞模式，非阻塞的IO都是相对于网络而言的
- *   
- * Buffer:数据存取
- *   
- * 选择器:Selector:SelectableChannel的多路复用器，用于监控SelectableChannel的IO状况
- */ 
+ * nio的阻塞式网络通信
+ */
 public class TestBlock {
     
     @Test
