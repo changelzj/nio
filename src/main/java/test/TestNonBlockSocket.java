@@ -2,17 +2,14 @@ package test;
 
 import org.junit.Test;
 
-import java.io.IOException;
+
 import java.net.InetSocketAddress;
-import java.nio.Buffer;
 import java.nio.ByteBuffer;
-import java.nio.channels.SelectableChannel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
-import java.security.Key;
-import java.util.Collections;
+
 import java.util.Date;
 import java.util.Iterator;
 import java.util.Set;
@@ -42,7 +39,7 @@ import java.util.Set;
  *  SelectionKey:通道和选择器之间的关系，选择器监控通道的什么状态（读 写 连接 接收），
  *  如果监控的不止一种状态，使用位或操作符连接
  */
-public class TestNonBlock {
+public class TestNonBlockSocket {
     @Test
     public void server() throws Exception {
         ServerSocketChannel serverSocketChannel = ServerSocketChannel.open();

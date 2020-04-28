@@ -99,6 +99,10 @@ public class TestBuffer {
             // 获取可以操作的数量
             System.out.println(byteBuffer.remaining());
         }
+        
+        while (byteBuffer.hasRemaining()) {
+            System.out.println(byteBuffer.get());
+        }
     }
 
     /**

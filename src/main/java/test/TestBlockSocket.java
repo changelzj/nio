@@ -14,7 +14,7 @@ import java.nio.file.StandardOpenOption;
 /**
  * nio的阻塞式网络通信
  */
-public class TestBlock {
+public class TestBlockSocket {
     
     @Test
     public void client() throws Exception {
