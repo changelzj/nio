@@ -4,6 +4,7 @@ import org.junit.Test;
 
 
 import java.net.InetSocketAddress;
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
@@ -39,20 +40,22 @@ import java.util.Set;
  *  SelectionKey:通道和选择器之间的关系，选择器监控通道的什么状态（读 写 连接 接收），
  *  如果监控的不止一种状态，使用位或操作符连接
  */
-public class TestNonBlockSocket {
-    @Test
-    public void server() throws Exception {
+public class NonBlockServer {
+    
+    public static void main(String[] args) throws Exception {
         ServerSocketChannel serverSocketChannel = ServerSocketChannel.open();
         serverSocketChannel.configureBlocking(false);
-        serverSocketChannel.bind(new InetSocketAddress(8564));
+        serverSocketChannel.bind(new InetSocketAddress(8087));
         // 声明一个选择器
         Selector selector = Selector.open();
         // 通道注册到选择器
         serverSocketChannel.register(selector, SelectionKey.OP_ACCEPT);
         // 轮询获取选择器上准备就绪的事件
         while (selector.select() > 0) {
-            Set<SelectionKey> selectionKeys = selector.selectedKeys();
-            Iterator<SelectionKey> iterator = selectionKeys.iterator();
+            
+            // 关注事件的集合
+            Iterator<SelectionKey> iterator = selector.selectedKeys().iterator();
+
             while (iterator.hasNext()) {
                 SelectionKey key = iterator.next();
                 // 判断什么事件准备就绪
@@ -60,34 +63,22 @@ public class TestNonBlockSocket {
                     SocketChannel socketChannel = serverSocketChannel.accept();
                     socketChannel.configureBlocking(false);
                     socketChannel.register(selector, SelectionKey.OP_READ);
-                } else if (key.isReadable()) {
+                }
+                else if (key.isReadable()) {
                     // 获取当前选择器上读就绪的通道
                     SocketChannel channel = (SocketChannel) key.channel();
                     ByteBuffer byteBuffer = ByteBuffer.allocate(1024);
-                    int len = 0;
-                    while ((len = channel.read(byteBuffer)) > 0) {
+                    while (channel.read(byteBuffer) != -1) {
                         byteBuffer.flip();
-                        System.out.println(new String(byteBuffer.array(), 0, len));
+                        System.out.println(new String(byteBuffer.array(), 0, byteBuffer.limit()));
+                        byteBuffer.clear();
                     }
+                    channel.shutdownInput();
                 }
+                
                 iterator.remove();
             }
-            
+
         }
-        
-    }
-    
-    @Test
-    public void client() throws Exception {
-        SocketChannel socketChannel = SocketChannel.open(new InetSocketAddress("127.0.0.1", 8564));
-        // 切换为非阻塞模式
-        socketChannel.configureBlocking(false);
-        ByteBuffer byteBuffer = ByteBuffer.allocate(1024);
-        byteBuffer.put(new Date().toString().getBytes());
-        byteBuffer.flip();
-        socketChannel.write(byteBuffer);
-        byteBuffer.clear();
-        
-        socketChannel.close();
     }
 }

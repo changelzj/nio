@@ -17,7 +17,6 @@ import java.nio.charset.CharsetEncoder;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.SortedMap;
 import java.util.stream.Stream;
 
@@ -52,16 +51,35 @@ public class TestChannel {
 
         ByteBuffer byteBuffer = ByteBuffer.allocate(1024);
         
-        while (in.read(byteBuffer) != -1) {
-            byteBuffer.flip();
-            out.write(byteBuffer);
-            byteBuffer.clear();
+        while (true) {
+            int len = in.read(byteBuffer);
+            if (len != -1) {
+                byteBuffer.flip();
+                out.write(byteBuffer);
+                byteBuffer.clear();
+            } else {
+                break;
+            }
+            
         }
         
         in.close();
         out.close();
         fileInputStream.close();
         fileOutputStream.close();
+    }
+
+    /**
+     * 直接在堆外内存修改文件
+     */
+    @Test
+    public void mappedBuffer() throws Exception {
+        RandomAccessFile file = new RandomAccessFile("a.txt", "rw");
+        FileChannel channel = file.getChannel();
+        MappedByteBuffer buffer = channel.map(FileChannel.MapMode.READ_WRITE, 0, 5);
+        buffer.put(0, (byte)'b');
+        buffer.put(4, (byte)'9');
+        file.close();
     }
 
     /**
@@ -117,17 +135,23 @@ public class TestChannel {
     public void test4() throws Exception {
         RandomAccessFile raf = new RandomAccessFile("1.txt","rw");
         FileChannel rchannel = raf.getChannel();
-        ByteBuffer buf1 = ByteBuffer.allocate(100);
-        ByteBuffer buf2 = ByteBuffer.allocate(1024);
-        ByteBuffer[] byteBuffers = {buf1, buf2};
-        rchannel.read(byteBuffers);
-        Stream.of(byteBuffers).forEach(Buffer::flip);
-        System.out.println(new String(buf1.array(), 0, buf1.limit()));
-        System.out.println(new String(buf2.array(), 0, buf2.limit()));
 
         RandomAccessFile raf2 = new RandomAccessFile("3.txt","rw");
         FileChannel wchannel = raf2.getChannel();
-        wchannel.write(byteBuffers);
+
+        ByteBuffer[] byteBuffers = new ByteBuffer[3];
+        byteBuffers[0] = ByteBuffer.allocate(10);
+        byteBuffers[1] = ByteBuffer.allocate(12);
+        byteBuffers[2] = ByteBuffer.allocate(3);
+        
+        while (rchannel.read(byteBuffers) != -1) {
+            Stream.of(byteBuffers).forEach(ByteBuffer::flip);
+            wchannel.write(byteBuffers);
+            Stream.of(byteBuffers).forEach(ByteBuffer::clear);
+        }
+        
+        rchannel.close();
+        wchannel.close();
     }
 
     /**

@@ -90,9 +90,11 @@ public class TestBuffer {
         byteBuffer.get(bytes, 0, 2);
         System.out.println("get: " + new String(bytes, 0, 2));
         byteBuffer.mark();
+        
         byteBuffer.get(bytes, 2, 2);
         System.out.println("get: " + new String(bytes, 2, 2));
         byteBuffer.reset();
+        
         System.out.println(byteBuffer.position());
         // 如果缓冲区内还有剩余的数据
         if (byteBuffer.hasRemaining()) {
@@ -117,4 +119,42 @@ public class TestBuffer {
         ByteBuffer byteBuffer = ByteBuffer.allocateDirect(1024);
         System.out.println(byteBuffer.isDirect());
     }
+
+    /**
+     * BufferUnderflowException
+     * 存取顺序和类型不符，会BufferUnderflowException
+     */
+    @Test
+    public void test4() {
+        ByteBuffer buffer = ByteBuffer.allocate(10000);
+        buffer.putInt(100);
+        buffer.putChar('猪');
+        buffer.putLong(100000L);
+        
+        buffer.flip();
+
+        System.out.println(buffer.getLong());
+        System.out.println(buffer.getLong());
+        System.out.println(buffer.getLong());
+    }
+
+    /**
+     * 只读的
+     */
+    @Test
+    public void test5() {
+        ByteBuffer buffer = ByteBuffer.allocate(100);
+        buffer.put("武汉加油".getBytes());
+        buffer.flip();
+        buffer = buffer.asReadOnlyBuffer();
+        while (buffer.hasRemaining()) {
+            System.out.println(buffer.get());
+        }
+        buffer.rewind();
+        buffer.put("武汉加油".getBytes());
+    }
+    
+    
+    
+    
 }
