@@ -1,17 +1,12 @@
 package test;
 
-import org.junit.Test;
-
-
 import java.net.InetSocketAddress;
-import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 
-import java.util.Date;
 import java.util.Iterator;
 import java.util.Set;
 
@@ -39,22 +34,28 @@ import java.util.Set;
  * 
  *  SelectionKey:通道和选择器之间的关系，选择器监控通道的什么状态（读 写 连接 接收），
  *  如果监控的不止一种状态，使用位或操作符连接
+ *  
+ *  
  */
 public class NonBlockServer {
     
     public static void main(String[] args) throws Exception {
         ServerSocketChannel serverSocketChannel = ServerSocketChannel.open();
         serverSocketChannel.configureBlocking(false);
-        serverSocketChannel.bind(new InetSocketAddress(8087));
+        serverSocketChannel.socket().bind(new InetSocketAddress(8087));
         // 声明一个选择器
         Selector selector = Selector.open();
         // 通道注册到选择器
         serverSocketChannel.register(selector, SelectionKey.OP_ACCEPT);
         // 轮询获取选择器上准备就绪的事件
-        while (selector.select() > 0) {
-            
+        while (true) {
+            if (selector.select(1000) == 0) {
+                System.out.println("服务器等待连接");
+                continue;
+            }
             // 关注事件的集合
-            Iterator<SelectionKey> iterator = selector.selectedKeys().iterator();
+            Set<SelectionKey> selectionKeys = selector.selectedKeys();
+            Iterator<SelectionKey> iterator = selectionKeys.iterator();
 
             while (iterator.hasNext()) {
                 SelectionKey key = iterator.next();
@@ -63,17 +64,28 @@ public class NonBlockServer {
                     SocketChannel socketChannel = serverSocketChannel.accept();
                     socketChannel.configureBlocking(false);
                     socketChannel.register(selector, SelectionKey.OP_READ);
+                    System.out.println("生成socket " + socketChannel);
                 }
-                else if (key.isReadable()) {
+                if (key.isReadable()) {
                     // 获取当前选择器上读就绪的通道
                     SocketChannel channel = (SocketChannel) key.channel();
                     ByteBuffer byteBuffer = ByteBuffer.allocate(1024);
-                    while (channel.read(byteBuffer) != -1) {
-                        byteBuffer.flip();
-                        System.out.println(new String(byteBuffer.array(), 0, byteBuffer.limit()));
-                        byteBuffer.clear();
+
+                    while (true) {
+                        int read = channel.read(byteBuffer);
+                        if (read > 0) {
+                            byteBuffer.flip();
+                            String s = new String(byteBuffer.array(), 0, byteBuffer.limit());
+                            System.out.println(s);
+                            byteBuffer.clear();
+                        } else if (read < 0) {
+                            channel.close();
+                            break;
+                        } else {
+                            break;
+                        }
+                        
                     }
-                    channel.shutdownInput();
                 }
                 
                 iterator.remove();
