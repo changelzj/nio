@@ -79,7 +79,9 @@ public class NonBlockServer {
                             System.out.println(s);
                             byteBuffer.clear();
                         } else if (read < 0) {
+                            System.out.println("断开连接 " + channel.toString());
                             channel.close();
+                            key.cancel();
                             break;
                         } else {
                             break;
