@@ -2,33 +2,36 @@ package test;
 
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
 import java.nio.channels.SocketChannel;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
 
 public class BlockClient {
 
     public static void main(String[] args) throws Exception {
-        InetSocketAddress address = new InetSocketAddress("127.0.0.1", 8564);
+        InetSocketAddress address = new InetSocketAddress("127.0.0.1", 5000);
         SocketChannel socketChannel = SocketChannel.open(address);
-        ByteBuffer buffer = ByteBuffer.allocate(1024);
-        FileChannel fileChannel = FileChannel.open(Paths.get("1.txt"), StandardOpenOption.READ);
-        while (fileChannel.read(buffer) != -1) {
-            buffer.flip();
-            socketChannel.write(buffer);
-            buffer.clear();
-        }
+        write(socketChannel);
         socketChannel.shutdownOutput();
-        int len = 0;
-        while ((len = socketChannel.read(buffer)) != -1) {
-            buffer.flip();
-            String s = new String(buffer.array(), 0, len);
-            System.out.println(s);
-            buffer.clear();
-        }
-
-        fileChannel.close();
+        read(socketChannel);
+        socketChannel.shutdownInput();
         socketChannel.close();
     }
+    
+    public static void write(SocketChannel socketChannel) throws Exception {
+        ByteBuffer buffer = ByteBuffer.wrap("hello server".getBytes());
+        socketChannel.write(buffer);
+    }
+
+    public static void read(SocketChannel socketChannel) throws Exception {
+        ByteBuffer byteBuffer = ByteBuffer.allocate(1024);
+        while (socketChannel.read(byteBuffer) != -1) {
+            byteBuffer.flip();
+            String s = new String(byteBuffer.array(), 0, byteBuffer.limit());
+            System.out.println(s);
+            byteBuffer.clear();
+        }
+    }
+    
 }
+
+
+

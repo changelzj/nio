@@ -78,12 +78,14 @@ public class NonBlockServer {
                             String s = new String(byteBuffer.array(), 0, byteBuffer.limit());
                             System.out.println(s);
                             byteBuffer.clear();
-                        } else if (read < 0) {
+                        } 
+                        else if (read == 0){
+                            break;
+                        } 
+                        else if (read == -1) {
                             System.out.println("断开连接 " + channel.toString());
                             channel.close();
                             key.cancel();
-                            break;
-                        } else {
                             break;
                         }
                         
