@@ -12,7 +12,7 @@ import java.util.Scanner;
 
 public class TestDatagram {
    
-    public static void main(String s[]) throws Exception {
+    public static void main(String[] s) throws Exception {
         DatagramChannel channel = DatagramChannel.open();
         channel.configureBlocking(false);
         ByteBuffer buffer = ByteBuffer.allocate(1024);

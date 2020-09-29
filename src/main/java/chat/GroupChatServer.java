@@ -1,13 +1,9 @@
 package chat;
 
+import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
-import java.nio.channels.Channel;
-import java.nio.channels.SelectableChannel;
-import java.nio.channels.SelectionKey;
-import java.nio.channels.Selector;
-import java.nio.channels.ServerSocketChannel;
-import java.nio.channels.SocketChannel;
+import java.nio.channels.*;
 import java.util.Iterator;
 
 public class GroupChatServer {
@@ -30,13 +26,9 @@ public class GroupChatServer {
                     else if (key.isReadable()) {
                         read(key);
                     }
-                    else if (key.isWritable()) {
-                        write(key);
-                    }
+
                     keyIterator.remove();
                 }
-            } else {
-                //System.out.println("服务器等待连接 " + System.currentTimeMillis());
             }
         }
         
@@ -54,30 +46,40 @@ public class GroupChatServer {
     }
     
     
-    private static void read(SelectionKey key) throws Exception {
+    private static void read(SelectionKey key) {
         SocketChannel socketChannel = (SocketChannel) key.channel();
         Selector selector = key.selector();
 
         ByteBuffer buffer = ByteBuffer.allocate(1024);
-        socketChannel.read(buffer);
-        
-        for (SelectionKey selectionKey : selector.keys()) {
-            Channel channel = selectionKey.channel();
-            if (channel instanceof SocketChannel && channel != socketChannel) {
-                SocketChannel cast = (SocketChannel) channel;
-                
-                buffer.rewind();
-                cast.write(buffer);
-                //buffer.clear();
+        try {
+            socketChannel.read(buffer);
+
+            for (SelectionKey selectionKey : selector.keys()) {
+                Channel channel = selectionKey.channel();
+                if (channel instanceof SocketChannel && channel != socketChannel) {
+                    SocketChannel cast = (SocketChannel) channel;
+
+                    buffer.rewind();
+                    cast.write(buffer);
+                }
+            }
+
+        } catch (IOException e) {
+            System.err.println(e.getLocalizedMessage());
+            key.channel();
+            try {
+                socketChannel.close();
+            } catch (IOException ioException) {
+                ioException.printStackTrace();
             }
         }
-    }
 
-
-    private static void write(SelectionKey key) throws Exception {
-        SocketChannel socketChannel = (SocketChannel) key.channel();
         
+
     }
+
+
+
     
     
     

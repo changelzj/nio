@@ -6,7 +6,6 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.MappedByteBuffer;
@@ -16,7 +15,6 @@ import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CharsetEncoder;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.util.Arrays;
 import java.util.SortedMap;
 import java.util.stream.Stream;
 
@@ -162,7 +160,7 @@ public class TestChannel {
     @Test
     public void testcharset() {
         SortedMap<String, Charset> stringCharsetSortedMap = Charset.availableCharsets();
-        stringCharsetSortedMap.forEach((k,v) -> System.out.println(k+"-"+v));
+        stringCharsetSortedMap.forEach((k,v) -> System.out.println(k+" => "+v));
     }
 
     /**
